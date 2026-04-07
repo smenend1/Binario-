@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Binario Docente Pro</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a1a">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔢</text></svg>">
+    <style>
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --accent: #2ecc71; --error: #ff4757; --text: #ffffff; }
+        body { font-family: 'Courier New', monospace; background-color: var(--bg); color: var(--text); padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 500px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #444; }
+        h2 { color: var(--accent); font-size: 0.9rem; margin: 0 0 10px 0; border-bottom: 1px solid #444; }
+        input { width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid #555; border-radius: 6px; background: #000; color: var(--accent); font-size: 1rem; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 8px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-green { background: var(--accent); color: #1a1a1a; }
+        .btn-blue { background: #3498db; color: white; }
+        .btn-orange { background: #e67e22; color: white; }
+        .res-box { background: #000; padding: 10px; border-radius: 6px; margin-top: 10px; overflow-x: auto; border: 1px solid #333; }
+        .op-table { margin: 5px auto; border-collapse: collapse; font-size: 1.2rem; }
+        .op-table td { padding: 2px 4px; text-align: center; min-width: 20px; }
+        .row-carry { color: var(--error); font-size: 0.8rem; }
+        .row-border { border-top: 2px solid white; }
+        .dec-label { color: #888; font-size: 0.75rem; padding-left: 10px !important; text-align: left !important; font-family: sans-serif; }
+        table.conversion { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
+        table.conversion td, table.conversion th { border: 1px solid #444; padding: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="text-align:center; color:var(--accent); font-size: 1.3rem;">DOCENTE: BINARIO v4</h1>
+    <div class="card">
+        <h2>Conversores</h2>
+        <input type="number" id="decIn" placeholder="Decimal a Binario">
+        <button class="btn-green" onclick="decABin()" style="width:100%">Decimal ➜ Binario</button>
+        <input type="text" id="binIn" placeholder="Binario a Decimal" style="margin-top:10px">
+        <button class="btn-blue" onclick="binADec()" style="width:100%">Binario ➜ Decimal</button>
+        <div id="resDual" class="res-box"></div>
+    </div>
+    <div class="card">
+        <h2>Calculadora (Acarreo/Préstamo)</h2>
+        <input type="text" id="b1" placeholder="Binario A">
+        <input type="text" id="b2" placeholder="Binario B">
+        <div class="btn-group">
+            <button class="btn-green" onclick="operar('suma')">SUMAR (+)</button>
+            <button class="btn-orange" onclick="operar('resta')">RESTAR (-)</button>
+        </div>
+        <div id="resOp" class="res-box"></div>
+    </div>
+</div>
+<script>
+    function decABin() {
+        let n = parseInt(document.getElementById('decIn').value);
+        if (isNaN(n)) return;
+        let t = n, pasos = [], bin = n === 0 ? "0" : "";
+        while (t > 0) {
+            pasos.push({d: t, c: Math.floor(t/2), r: t%2});
+            bin = (t%2) + bin;
+            t = Math.floor(t/2);
+        }
+        let h = `<strong>Binario: ${bin}</strong><table class="conversion"><tr><th>Div</th><th>Coc</th><th>Res</th></tr>`;
+        pasos.forEach(p => h += `<tr><td>${p.d}/2</td><td>${p.c}</td><td>${p.r}</td></tr>`);
+        document.getElementById('resDual').innerHTML = h + "</table>";
+    }
+    function binADec() {
+        let b = document.getElementById('binIn').value.replace(/[^01]/g,'');
+        if (!b) return;
+        let decimal = parseInt(b, 2), exp = "", len = b.length;
+        for (let i = 0; i < len; i++) exp += `${b[i]}·2<sup>${len-1-i}</sup> ${i < len-1 ? '+ ' : ''}`;
+        document.getElementById('resDual').innerHTML = `<div style="color:var(--accent)"><strong>Decimal: ${decimal}</strong></div><div style="font-size:0.8rem; margin-top:5px">${exp}</div>`;
+    }
+    function operar(tipo) {
+        let a = document.getElementById('b1').value.replace(/[^01]/g,'');
+        let b = document.getElementById('b2').value.replace(/[^01]/g,'');
+        if (!a || !b) return;
+        let dA = parseInt(a, 2), dB = parseInt(b, 2);
+        if (tipo === 'resta' && dA < dB) { alert("A debe ser ≥ B"); return; }
+        let resBin = (tipo === 'suma' ? dA + dB : dA - dB).toString(2);
+        let max = Math.max(a.length, b.length, resBin.length);
+        let arrA = a.padStart(max, ' ').split(''), arrB = b.padStart(max, ' ').split(''), arrR = resBin.padStart(max, ' ').split(''), arrC = Array(max).fill(' ');
+        if (tipo === 'suma') {
+            let carry = 0, tA = a.padStart(max, '0'), tB = b.padStart(max, '0');
+            for(let i = max - 1; i >= 0; i--) {
+                if (carry > 0) arrC[i] = "1";
+                let s = parseInt(tA[i]) + parseInt(tB[i]) + carry;
+                carry = s >= 2 ? 1 : 0;
+            }
+        } else {
+            let tA = a.padStart(max, '0').split('').map(Number), tB = b.padStart(max, '0').split('').map(Number);
+            for(let i = max - 1; i >= 0; i--) {
+                if (tA[i] < tB[i]) { arrC[i] = "1"; if(i > 0) tA[i-1]--; }
+            }
+        }
+        let html = `<table class="op-table"><tr class="row-carry">`;
+        arrC.forEach(v => html += `<td>${v}</td>`);
+        html += `<td class="dec-label">(Acarreo)</td></tr><tr>`;
+        arrA.forEach(v => html += `<td>${v}</td>`);
+        html += `<td class="dec-label">= ${dA}₁₀</td></tr><tr>`;
+        arrB.forEach((v, i) => html += `<td>${i === 0 ? (tipo==='suma'?'+':'-') : ''}${v}</td>`);
+        html += `<td class="dec-label">= ${dB}₁₀</td></tr><tr class="row-border">`;
+        arrR.forEach(v => html += `<td>${v}</td>`);
+        html += `<td class="dec-label">= ${(tipo==='suma'?dA+dB:dA-dB)}₁₀</td></tr></table>`;
+        document.getElementById('resOp').innerHTML = html;
+    }
+</script>
+</body>
+</html>
